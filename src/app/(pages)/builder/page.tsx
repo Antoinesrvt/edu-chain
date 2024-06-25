@@ -1,48 +1,110 @@
 "use client"
 import { useState } from 'react';
 import * as Card from "~/components/ui/card";
-import * as Select from "~/components/ui/select";
 import {Button} from "~/components/ui/button";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-import {Heading} from "~/components/ui/heading";
-import { Stack, HStack } from 'styled-system/jsx';
 import { css } from 'styled-system/css';
-import { Code } from '~/components/ui/code';
+import {
+  Plugin,
+  TechStack,
+} from "../../types/building";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { createRepo } from '~/app/api/createRepo';
+import { frameworksJS, frameworksCSS, headless, components } from '~/app/types/building';
 
-type SelectItem = {
-  label: string;
-  value: string;
-  disabled?: boolean;
-}
+import Step1Card from "./steps/step1";
+import Step2Card from "./steps/step2";
+import Step3Card from "./steps/step3";
+
 
 
 export default function BuilderPage() {
-  const [selectedBoilerplate, setSelectedBoilerplate] = useState('');
-  const [selectedHeadlessComp, setSelectedHeadlessComp] = useState('');
-  const [selectedUI, setSelectedUI] = useState('');
-  const [selectedCompLib, setSelectedCompLib] = useState('');
+  const [selectedBoilerplate, setSelectedBoilerplate] = useState<TechStack>({
+    frameworkJS: frameworksJS[0].value,
+    frameworkCSS: frameworksCSS[0].value,
+    headless: headless[0].value,
+    componentLib: components[0].value,
+  });
+  const [selectedPlugins, setSelectedPlugins] = useState<Plugin[]>([]);
+  const [steps, setSteps] = useState(0);
 
-    const boilerplates: SelectItem[] = [
-      { label: "React", value: "react" },
-      { label: "Solid", value: "solid", disabled: true },
-      { label: "Svelte", value: "svelte", disabled: true },
-      { label: "Vue", value: "vue", disabled: true },
-    ];
+const [repoName, setRepoName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState('');
 
-    const headlessComp: SelectItem[] = [
-          { label: "ArkUI ", value: "react" },
-          { label: "radixUI", value: "solid", disabled: true },
-        ];
+  const { data: session } = useSession();
+  const router = useRouter();
 
-    const UI: SelectItem[] = [
-      { label: "Tailwind ", value: "react", disabled: true },
-      { label: "Panda css", value: "solid" },
-    ];
+  function setPluginsSelected(plugin: Plugin) {
+    const selectedPlugin = selectedPlugins.find((p) => p == plugin)
+    if(selectedPlugin) {
+      const newPlugins = selectedPlugins.filter((p) => p !== plugin);
+      setSelectedPlugins([...newPlugins]);
+      return;
+    } 
 
-    const compLib: SelectItem[] = [
-      { label: "ParkUI", value: "@park-ui" },
-      { label: "shadcn/ui", value: "@shadcn/ui", disabled: true },
-    ];
+    if(selectedPlugins.find((p) => p.family === plugin.family)) {
+      const newPlugins = selectedPlugins.filter((p) => p.family !== plugin.family);
+      setSelectedPlugins([...newPlugins, plugin]);
+    } else {
+      setSelectedPlugins([...selectedPlugins, plugin]);
+    }
+  }
+
+
+
+
+  async function handleCreateRepository() {
+    if (!session) {
+      setError("You must be logged in to create a repository");
+      return;
+    }
+
+    setIsCreating(true);
+    setError("");
+
+    try {
+      const result = await createRepo(
+        selectedBoilerplate,
+        selectedPlugins,
+        repoName
+      );
+      router.push(`/success?repoUrl=${encodeURIComponent(result.repoUrl)}`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+
+  function next() {
+    setSteps(steps + 1);
+    if(steps == 3) {
+      handleCreateRepository();
+    }
+  }
+
+  function back() {
+    if(steps > 0) {
+      setSteps(steps - 1);
+    } else {
+      router.push("/");
+    }
+  }
+
+  function nextDisabled() {
+    switch(steps) {
+      case 0:
+        return !(selectedBoilerplate?.headless && selectedBoilerplate?.frameworkJS && selectedBoilerplate?.frameworkCSS && selectedBoilerplate?.componentLib);
+      case 1:
+        return !selectedPlugins.length;
+      case 2:
+        return !repoName;
+    }
+  }
 
 
   return (
@@ -56,71 +118,24 @@ export default function BuilderPage() {
       })}
     >
       <Card.Root width="md" height="lg">
-        <Card.Header>
-          <Card.Title>Select a Boilerplate</Card.Title>
-        </Card.Header>
-        <Card.Body>
-          <Stack gap="4">
-            <div>
-              <Heading className={css({ pt: "10px", pb: "6px" })}>
-                Main stack:
-              </Heading>
-              <HStack gap="4">
-                <SelectComp
-                  label="Framework"
-                  items={boilerplates}
-                  onSelect={setSelectedBoilerplate}
-                />
-                <SelectComp
-                  label="CSS framework"
-                  items={UI}
-                  onSelect={setSelectedUI}
-                />
-              </HStack>
-            </div>
-            <div className={css({pb: "18px"})}>
-              <Heading className={css({ pt: "10px", pb: "6px" })}>
-                Components / UI: :
-              </Heading>
-              <HStack gap="4">
-                <SelectComp
-                  label="Headless Component"
-                  items={headlessComp}
-                  onSelect={setSelectedHeadlessComp}
-                />
-
-                <SelectComp
-                  label="Component library"
-                  items={compLib}
-                  onSelect={setSelectedCompLib}
-                />
-              </HStack>
-            </div>
-            {selectedBoilerplate &&
-              selectedHeadlessComp &&
-              selectedUI &&
-              selectedCompLib && (
-                <HStack gap="4">
-                  <Heading>Tech stack:</Heading>
-                  <Code background="lightblue" color="white">{selectedBoilerplate}</Code>
-                  <Code background="lightseagreen" color="white">{selectedCompLib}</Code>
-                  <Code background="gray.emphasized" color="white">{selectedHeadlessComp}</Code>
-                  <Code background="green" color="white">{selectedUI}</Code>
-                </HStack>
-              )}
-          </Stack>
-        </Card.Body>
+        {steps === 0 && (
+          <Step1Card
+            selectedBoilerplate={selectedBoilerplate}
+            setSelectedBoilerplate={setSelectedBoilerplate}
+          />
+        )}
+        {steps === 1 && (
+          <Step2Card onSelect={setPluginsSelected} selected={selectedPlugins} />
+        )}
+        {steps === 2 && (
+          <Step3Card onChange={setRepoName} />
+        )}
         <Card.Footer gap="3">
-          <Button variant="outline">Cancel</Button>
-          <Button
-            disabled={
-              !selectedBoilerplate ||
-              !selectedHeadlessComp ||
-              !selectedUI ||
-              !selectedCompLib
-            }
-          >
-            Next
+          <Button variant="outline" onClick={() => back()}>
+            {steps === 0 ? "Cancel" : "Back"}
+          </Button>
+          <Button disabled={nextDisabled()} onClick={() => next()}>
+            {steps < 3 ? "Next" : "Generate"}
           </Button>
         </Card.Footer>
       </Card.Root>
@@ -128,43 +143,5 @@ export default function BuilderPage() {
   );
 }
 
-type SelectCompProps = {
-  label: string;
-  items: SelectItem[];
-  onSelect: (item: string) => void;
-}
 
-
-function SelectComp({label, items, onSelect}: SelectCompProps) {
-  return (
-    <Select.Root positioning={{ sameWidth: true }} width="2xs" items={items}>
-      <Select.Label>{label}</Select.Label>
-      <Select.Control>
-        <Select.Trigger>
-          <Select.ValueText placeholder="Select" />
-          <ChevronsUpDownIcon />
-        </Select.Trigger>
-      </Select.Control>
-      <Select.Positioner>
-        <Select.Content>
-          <Select.ItemGroup>
-            <Select.ItemGroupLabel>{label}</Select.ItemGroupLabel>
-            {items.map((item) => (
-              <Select.Item
-                key={item.value}
-                item={item}
-                onClick={() => onSelect(item.label)}
-              >
-                <Select.ItemText>{item.label}</Select.ItemText>
-                <Select.ItemIndicator>
-                  <CheckIcon />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.ItemGroup>
-        </Select.Content>
-      </Select.Positioner>
-    </Select.Root>
-  );
-}
 

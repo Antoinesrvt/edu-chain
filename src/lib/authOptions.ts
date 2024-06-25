@@ -1,13 +1,48 @@
-import NextAuth from "next-auth";
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
-export const authOptions = {
-  // Configure one or more authentication providers
+import { JWT } from "next-auth/jwt";
+import { DefaultSession, Account } from "next-auth";
+
+// Extend the built-in session type
+interface ExtendedSession extends DefaultSession {
+  accessToken?: string;
+}
+
+// Extend the built-in token type
+interface ExtendedToken extends JWT {
+  accessToken?: string;
+}
+
+// Extend the built-in account type
+interface ExtendedAccount extends Account {
+  access_token?: string;
+}
+
+export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
-      clientId: process.env.GITHUB_ID || "",
-      clientSecret: process.env.GITHUB_SECRET || "",
+      clientId: process.env.GITHUB_ID!,
+      clientSecret: process.env.GITHUB_SECRET!,
+      authorization: { params: { scope: "repo" } },
     }),
-    // ...add more providers here
   ],
+
+callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token
+      }
+      return token
+    },
+    async session({ session, token, user }): Promise<ExtendedSession> {
+      return {
+        ...session,
+        accessToken: token.accessToken as string,
+      }
+    },
+  },
 };
-export default NextAuth(authOptions);
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

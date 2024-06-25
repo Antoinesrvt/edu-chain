@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { PropsWithChildren } from 'react'
 import './global.css'
 import SessionWrapper from '../lib/SessionWrapper'
+import Navbar from './components/topBar'
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -13,7 +14,10 @@ const RootLayout = (props: PropsWithChildren) => {
   return (
     <SessionWrapper>
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Navbar />
+        {children}
+        </body>
     </html>
     </SessionWrapper>
   )
