@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PropsWithChildren } from 'react'
 import './global.css'
+import SessionWrapper from '../lib/SessionWrapper'
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -10,9 +11,11 @@ export const metadata: Metadata = {
 const RootLayout = (props: PropsWithChildren) => {
   const { children } = props
   return (
+    <SessionWrapper>
     <html lang="en">
       <body>{children}</body>
     </html>
+    </SessionWrapper>
   )
 }
 

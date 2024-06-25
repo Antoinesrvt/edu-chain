@@ -2,15 +2,15 @@
 
 import type { Assign } from '@ark-ui/react'
 import { RadioGroup } from '@ark-ui/react/radio-group'
-import { type RadioButtonGroupVariantProps, radioButtonGroup } from 'styled-system/recipes'
+import { type RadioGroupVariantProps, radioGroup } from 'styled-system/recipes'
 import type { JsxStyleProps } from 'styled-system/types'
 import { createStyleContext } from '~/lib/create-style-context'
 
-const { withProvider, withContext } = createStyleContext(radioButtonGroup)
+const { withProvider, withContext } = createStyleContext(radioGroup)
 
 export interface RootProps
   extends Assign<JsxStyleProps, RadioGroup.RootProps>,
-    RadioButtonGroupVariantProps {}
+    RadioGroupVariantProps {}
 export const Root = withProvider<HTMLDivElement, RootProps>(RadioGroup.Root, 'root')
 
 export const Indicator = withContext<
@@ -37,7 +37,6 @@ export const Label = withContext<HTMLLabelElement, Assign<JsxStyleProps, RadioGr
   RadioGroup.Label,
   'label',
 )
-
 export {
   RadioGroupContext as Context,
   type RadioGroupContextProps as ContextProps,

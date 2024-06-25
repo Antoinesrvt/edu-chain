@@ -1,47 +1,38 @@
+"use client"
 import { Container } from 'styled-system/jsx'
 import { Button } from '~/components/ui/button'
-import * as RadioButtonGroup from '~/components/ui/radio-button-group'
-import { Slider } from '~/components/ui/slider'
-import * as Tabs from '~/components/ui/tabs'
+import { useRouter } from 'next/navigation'
+import { css } from "styled-system/css";
+import { signIn } from 'next-auth/react';
 
 export default function Home() {
+  const router = useRouter()
+  const handleClick = async () => {
+    try {
+      const result = await signIn("github", { callbackUrl: "/builder" });
+      if (result?.error) {
+        console.error("Sign in error:", result.error);
+      } else {
+        router.push("/builder");
+      }
+    } catch (error) {
+      console.error("Sign in error:", error);
+    }
+  };
   return (
-    <Container py={{ base: '12', md: '16' }} maxW="7xl">
-      <Tabs.Root defaultValue="button">
-        <Tabs.List>
-          <Tabs.Trigger value="button">Button</Tabs.Trigger>
-          <Tabs.Trigger value="radio">Radio Group</Tabs.Trigger>
-          <Tabs.Trigger value="slider">Slider</Tabs.Trigger>
-          <Tabs.Indicator />
-        </Tabs.List>
-        <Tabs.Content value="button">
-          <Button size="md">Hello Park UI</Button>
-        </Tabs.Content>
-        <Tabs.Content value="radio">
-          <RadioButtonGroup.Root defaultValue="react">
-            {[{ value: 'S' }, { value: 'M' }, { value: 'L', disabled: true }, { value: 'XL' }].map(
-              (option, id) => (
-                <RadioButtonGroup.Item key={id} value={option.value} disabled={option.disabled}>
-                  <RadioButtonGroup.ItemControl />
-                  <RadioButtonGroup.Label>{option.value}</RadioButtonGroup.Label>
-                </RadioButtonGroup.Item>
-              ),
-            )}
-          </RadioButtonGroup.Root>
-        </Tabs.Content>
-        <Tabs.Content value="slider">
-          <Slider
-            min={0}
-            max={100}
-            defaultValue={[33]}
-            marks={[
-              { value: 25, label: '25' },
-              { value: 50, label: '50' },
-              { value: 75, label: '75' },
-            ]}
-          />
-        </Tabs.Content>
-      </Tabs.Root>
+    <Container
+      className={css({
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        width: "100vw",
+      })}
+      maxW="7xl"
+    >
+      <Button size="md" onClick={handleClick}>
+        Launch website builder
+      </Button>
     </Container>
-  )
+  );
 }
