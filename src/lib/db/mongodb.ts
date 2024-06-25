@@ -1,6 +1,6 @@
 // lib/db/mongodb.ts
 import mongoose, { Model } from "mongoose";
-import { ITechItem } from "~/app/types/building";
+import { ITechItem } from "~/app/types/server";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 

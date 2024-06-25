@@ -18,7 +18,7 @@ import { SelectComp } from "@components/UI/select";
 import { frameworkJS, frameworkCSS, headlessLib, componentLib } from "../../../types/building";
 
 type Props = {
-  selectedBoilerplate: TechStack;
+  selectedBoilerplate: TechStack | undefined;
   setSelectedBoilerplate: (boilerplate: TechStack) => void;
 }
 

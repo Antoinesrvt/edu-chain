@@ -59,6 +59,8 @@ function Step2({ onSelect, selected }: Props) {
 
   console.log(selected.includes(plugins[0]))
 
+  
+
   return (
     <>
       <Card.Header>

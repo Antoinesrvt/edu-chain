@@ -1,23 +1,3 @@
-import { Document } from "mongoose";
-
-export interface ScriptAction {
-  type: "install" | "addFile" | "executeCommand";
-  payload: string;
-}
-
-export interface ITechItem extends Document {
-  name: string;
-  type: "frameworkJS" | "frameworkCSS" | "headless" | "componentLib" | "plugin";
-  actions: ScriptAction[];
-  files: ProjectFile[];
-}
-
-export interface TechItem {
-  name: string;
-  actions: ScriptAction[];
-  files: ProjectFile[];
-}
-
 export type FrameworkJS = {
   label: string;
   value: frameworkJS
@@ -103,7 +83,7 @@ export const headless: Headless[] = [
 
 export const frameworksCSS: FrameworkCSS[] = [
   { label: "Tailwind ", value: "tailwindcss" },
-  { label: "Panda css", value: "pandacss" },
+  { label: "PandaCSS", value: "pandacss" },
 ];
 
 export const components: Component[] = [

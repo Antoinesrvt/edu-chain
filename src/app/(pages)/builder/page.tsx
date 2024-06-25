@@ -3,6 +3,7 @@ import { useState } from 'react';
 import * as Card from "~/components/ui/card";
 import {Button} from "~/components/ui/button";
 import { css } from 'styled-system/css';
+import { Center } from 'styled-system/jsx';
 import {
   Plugin,
   TechStack,
@@ -11,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { createRepo } from '~/app/api/createRepo';
 import { frameworksJS, frameworksCSS, headless, components } from '~/app/types/building';
+import { Loader2 } from 'lucide-react';
 
 import Step1Card from "./steps/step1";
 import Step2Card from "./steps/step2";
@@ -19,12 +21,7 @@ import Step3Card from "./steps/step3";
 
 
 export default function BuilderPage() {
-  const [selectedBoilerplate, setSelectedBoilerplate] = useState<TechStack>({
-    frameworkJS: frameworksJS[0].value,
-    frameworkCSS: frameworksCSS[0].value,
-    headless: headless[0].value,
-    componentLib: components[0].value,
-  });
+  const [selectedBoilerplate, setSelectedBoilerplate] = useState<TechStack>();
   const [selectedPlugins, setSelectedPlugins] = useState<Plugin[]>([]);
   const [steps, setSteps] = useState(0);
 
@@ -52,9 +49,11 @@ const [repoName, setRepoName] = useState('');
   }
 
 
-
-
   async function handleCreateRepository() {
+         if (!selectedBoilerplate || !repoName) {
+           setError("Please fill in all the fields");
+           return;
+         }
     if (!session) {
       setError("You must be logged in to create a repository");
       return;
@@ -64,16 +63,24 @@ const [repoName, setRepoName] = useState('');
     setError("");
 
     try {
+
       const result = await createRepo(
         selectedBoilerplate,
         selectedPlugins,
         repoName
       );
-      router.push(`/success?repoUrl=${encodeURIComponent(result.repoUrl)}`);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
+      console.log(result)
+      if(result) {
+        router.push(`/success?repoUrl=${encodeURIComponent(result.repoUrl)}`);
+      }
+    } catch (err: any) {
+      if (err.message.includes("already exists")) {
+        setError(
+          `A repository named "${repoName}" already exists. Please choose a different name.`
+        );
+      } else {
+        setError(err.message || "An unknown error occurred");
+      }
     } finally {
       setIsCreating(false);
     }
@@ -81,10 +88,11 @@ const [repoName, setRepoName] = useState('');
 
 
   function next() {
-    setSteps(steps + 1);
-    if(steps == 3) {
+    console.log(steps)
+    if (steps == 2) {
       handleCreateRepository();
     }
+    setSteps(steps + 1);
   }
 
   function back() {
@@ -99,8 +107,8 @@ const [repoName, setRepoName] = useState('');
     switch(steps) {
       case 0:
         return !(selectedBoilerplate?.headless && selectedBoilerplate?.frameworkJS && selectedBoilerplate?.frameworkCSS && selectedBoilerplate?.componentLib);
-      case 1:
-        return !selectedPlugins.length;
+      // case 1:
+      //   return !selectedPlugins.length;
       case 2:
         return !repoName;
     }
@@ -108,13 +116,11 @@ const [repoName, setRepoName] = useState('');
 
 
   return (
-    <div
+    <Center
       className={css({
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        width: "100vw",
+        height: "100%",
+        maxHeight: "90vh",
+        maxWidth: "100vw",
       })}
     >
       <Card.Root width="md" height="lg">
@@ -127,19 +133,51 @@ const [repoName, setRepoName] = useState('');
         {steps === 1 && (
           <Step2Card onSelect={setPluginsSelected} selected={selectedPlugins} />
         )}
-        {steps === 2 && (
-          <Step3Card onChange={setRepoName} />
+        {steps === 2 && <Step3Card onChange={setRepoName} />}
+        {steps === 3 && (
+          <Card.Body
+            className={css({
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+            })}
+          >
+            {error ? (
+              <p>{error}</p>
+            ) : (
+              isCreating ?(
+                <>
+                  <Loader2
+                    className={css({
+                      animation: "spin 1s linear infinite",
+                      marginBottom: "4",
+                    })}
+                    size={48}
+                  />
+                  <p>Creating your repository...</p>
+                </>
+              ) : (
+                <p>Repository created successfully</p>
+              )
+            )}
+          </Card.Body>
         )}
         <Card.Footer gap="3">
           <Button variant="outline" onClick={() => back()}>
-            {steps === 0 ? "Cancel" : "Back"}
+            {steps === 0 || steps === 3 ? "Cancel" : "Back"}
           </Button>
-          <Button disabled={nextDisabled()} onClick={() => next()}>
-            {steps < 3 ? "Next" : "Generate"}
+          <Button
+            display={steps !== 3 ? "" : "none"}
+            disabled={nextDisabled()}
+            onClick={() => next()}
+          >
+            {steps < 2 ? "Next" : "Generate"}
           </Button>
         </Card.Footer>
       </Card.Root>
-    </div>
+    </Center>
   );
 }
 
