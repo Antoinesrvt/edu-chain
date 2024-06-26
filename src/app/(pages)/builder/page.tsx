@@ -63,16 +63,15 @@ const [repoName, setRepoName] = useState('');
     setError("");
 
     try {
-
       const result = await createRepo(
         selectedBoilerplate,
         selectedPlugins,
         repoName
       );
       console.log(result)
-      if(result) {
-        router.push(`/success?repoUrl=${encodeURIComponent(result.repoUrl)}`);
-      }
+      // if(result) {
+      //   router.push(`/success?repoUrl=${encodeURIComponent(result.repoUrl)}`);
+      // }
     } catch (err: any) {
       if (err.message.includes("already exists")) {
         setError(

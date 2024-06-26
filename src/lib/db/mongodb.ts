@@ -2,6 +2,8 @@
 import mongoose, { Model } from "mongoose";
 import { ITechItem } from "~/app/types/server";
 
+mongoose.set("debug", true);
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
@@ -21,8 +23,10 @@ if (!cached) {
   cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
+
 async function dbConnect() {
   if (cached.conn) {
+    console.log("Using existing database connection");
     return cached.conn;
   }
 
@@ -31,20 +35,25 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
+    console.log("Connecting to MongoDB...", MONGODB_URI);
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      console.log("Connected to MongoDB");
       return mongoose;
     });
   }
 
   try {
     cached.conn = await cached.promise;
+    console.log("Database connection established");
   } catch (e) {
     cached.promise = null;
+    console.error("Error connecting to MongoDB:", e);
     throw e;
   }
 
   return cached.conn;
 }
+
 
 const ScriptActionSchema = new mongoose.Schema({
   type: {
@@ -82,7 +91,7 @@ const TechItemSchema = new mongoose.Schema({
   },
   actions: [ScriptActionSchema],
   files: [ProjectFileSchema],
-});
+}, { collection: 'techItems' });
 
 export const TechItem: Model<ITechItem> =
   mongoose.models.TechItem ||

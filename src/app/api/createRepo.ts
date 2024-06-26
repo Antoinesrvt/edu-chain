@@ -24,7 +24,6 @@ export async function createRepo(
   repoName: string
 ) {
   const session = await getServerSession(authOptions)
-  console.log(session)
   if (!session || !session.accessToken) {
     throw new Error("Unauthorized or missing access token");
   }
@@ -57,7 +56,6 @@ try {
 
     // Get the tech items from the database
     const techItems = await getTechItems(selectedBoilerplate, selectedPlugins);
-
     // Order of execution
     const executionOrder = [
       "frameworkJS",
@@ -83,7 +81,7 @@ try {
       selectedPlugins
     );
 
-    return { success: true, repoUrl: repo.html_url };
+    return { success: true, repoUrl: `https://github.com/${session.user?.name}/${repoName}` };
   } catch (error: any) {
     console.error("Error creating repository:", error);
     if (error.status === 422 && error.message.includes("name already exists")) {
@@ -97,16 +95,24 @@ async function getTechItems(
   plugins: Plugin[]
 ): Promise<ITechItem[]> {
   await dbConnect();
+  try {
 
-  const techItemNames = [
-    boilerplate.frameworkJS,
-    boilerplate.frameworkCSS,
-    boilerplate.headless,
-    boilerplate.componentLib,
-    ...plugins.map((p) => p.name),
-  ];
+    
+const techItemNames = [
+  boilerplate.frameworkJS,
+  boilerplate.frameworkCSS,
+  boilerplate.headless,
+  boilerplate.componentLib,
+  ...plugins.map((p) => p.name),
+].map((name) => name.trim());
 
-  return TechItem.find({ name: { $in: techItemNames } });
+    const techItems = await TechItem.find({ name: { $in: techItemNames } });
+
+    return techItems;
+  } catch (error) {
+    console.log(error)
+    throw error
+  }  
 }
 
 async function executeItemActions(
@@ -262,4 +268,17 @@ jobs:
       error
     );
   }
+}
+
+
+async function insertTestTechItem() {
+  await dbConnect();
+  const testItem = new TechItem({
+    name: "TestItem",
+    type: "frameworkJS",
+    actions: [{ type: "install", payload: "test-package" }],
+    files: [{ path: "test.js", content: "console.log('test');" }],
+  });
+  await testItem.save();
+  console.log("Test item inserted");
 }
