@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { PropsWithChildren } from 'react'
 import './global.css'
-import SessionWrapper from '../lib/SessionWrapper'
 import Navbar from './components/topBar'
 
 export const metadata: Metadata = {
@@ -12,14 +11,12 @@ export const metadata: Metadata = {
 const RootLayout = (props: PropsWithChildren) => {
   const { children } = props
   return (
-    <SessionWrapper>
     <html lang="en">
       <body>
         <Navbar />
         {children}
         </body>
     </html>
-    </SessionWrapper>
   )
 }
 

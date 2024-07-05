@@ -1,24 +1,15 @@
 "use client"
+import React, { useState } from "react";
 import { Container } from 'styled-system/jsx'
 import { Button } from '~/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { css } from "styled-system/css";
-import { signIn } from 'next-auth/react';
+import CreateCourseModal from "./components/modals/createCourse";
 
 export default function Home() {
+  const [open, setOpen] = useState(false)
   const router = useRouter()
-  const handleClick = async () => {
-    try {
-      const result = await signIn("github", { callbackUrl: "/builder" });
-      if (result?.error) {
-        console.error("Sign in error:", result.error);
-      } else {
-        router.push("/builder");
-      }
-    } catch (error) {
-      console.error("Sign in error:", error);
-    }
-  };
+
   return (
     <Container
       className={css({
@@ -30,9 +21,8 @@ export default function Home() {
       })}
       maxW="7xl"
     >
-      <Button size="md" onClick={handleClick}>
-        Launch website builder
-      </Button>
+      <Button onClick={() => setOpen(true)}>Open Modal</Button>
+      <CreateCourseModal open={open} onClose={() => setOpen(false)} />
     </Container>
   );
 }

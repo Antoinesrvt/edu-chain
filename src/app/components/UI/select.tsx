@@ -9,6 +9,7 @@ type SelectItem = {
 };
 
 type SelectProps = {
+  className?: string;
   label: string;
   value?: string;
   items: SelectItem[];
@@ -16,10 +17,15 @@ type SelectProps = {
 };
 
 
-export function SelectComp({ label, items, onSelect, value }: SelectProps) {
+export function SelectComp({ label, items, onSelect, value, className }: SelectProps) {
   console.log(label, value)
   return (
-    <Select.Root positioning={{ sameWidth: true }} width="2xs" items={items}>
+    <Select.Root
+      positioning={{ sameWidth: true }}
+      width="2xs"
+      items={items}
+      className={className}
+    >
       <Select.Label>{label}</Select.Label>
       <Select.Control>
         <Select.Trigger>
@@ -37,7 +43,9 @@ export function SelectComp({ label, items, onSelect, value }: SelectProps) {
                 item={item}
                 onClick={() => onSelect(item.label)}
               >
-                <Select.ItemText defaultValue={value}>{item.label}</Select.ItemText>
+                <Select.ItemText defaultValue={value}>
+                  {item.label}
+                </Select.ItemText>
                 <Select.ItemIndicator>
                   <CheckIcon />
                 </Select.ItemIndicator>
